@@ -41,7 +41,7 @@ func NewImage(r *http.Request, config HandlerConfig, fileName string) (image *Im
 	image = &Image{
 		Path:            config.Timeweb.FilePath,
 		Bucket:          config.Timeweb.BucketName,
-		TimewebToken	 config.Timeweb.TimewebToken,
+		TimewebToken:	 config.Timeweb.TimewebToken,
 		Height:          100,
 		Crop:            crop,
 		Width:           100,
