@@ -3,6 +3,7 @@ package s3imageserver
 import (
 	"errors"
 	"fmt"
+	"log"
 	"io/ioutil"
 	"net/http"
 	"strconv"
@@ -42,6 +43,7 @@ func NewImage(r *http.Request, config HandlerConfig, fileName string) (image *Im
 		TimewebToken:	 config.Timeweb.TimewebToken,
 		Height:          100,
 		Crop:            crop,
+		Debug: 			 true,
 		Width:           100,
 		CacheTime:       604800, // cache time in seconds, set 0 to infinite and -1 for disabled
 		CachePath:       config.CachePath,
@@ -101,7 +103,8 @@ func (i *Image) getErrorImage() (err error) {
 
 func (i *Image) getImageFromS3() (err error) {
 	req, _ := http.NewRequest("GET", fmt.Sprintf("https://s3.timeweb.com/%v%v%v", i.Bucket, i.Path, i.FileName), nil)
-	req.Header.Set("Authorization", "Bearer " + i.TimewebToken)
+	log.Println(fmt.Sprintf("https://s3.timeweb.com/%v%v%v", i.Bucket, i.Path, i.FileName))
+	//req.Header.Set("Authorization", "Bearer " + i.TimewebToken)
 
 	resp, err := http.DefaultClient.Do(req)
 	if err == nil && resp.StatusCode == http.StatusOK {
