@@ -5,10 +5,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"net/http"
-	"net/url"
 	"os"
-	"path/filepath"
-	"strings"
 	"time"
 )
 
