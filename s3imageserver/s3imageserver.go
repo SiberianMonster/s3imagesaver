@@ -33,7 +33,7 @@ type HandlerConfig struct {
 		BucketName string `json:"bucket_name"`
 		FilePath   string `json:"file_path"`
 		TimewebToken   string `json:"timeweb_token"`
-	} `json:"aws"`
+	} `json:"timeweb"`
 	ErrorImage   string   `json:"error_image"`
 	Allowed      []string `json:"allowed_formats"`
 	OutputFormat string   `json:"output_format"`

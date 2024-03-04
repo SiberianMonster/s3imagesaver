@@ -11,7 +11,7 @@ import (
 	"time"
 
 	"github.com/xiam/to"
-	"github.com/kr/s3"
+
 )
 
 type Image struct {
