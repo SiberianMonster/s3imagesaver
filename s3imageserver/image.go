@@ -5,10 +5,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"net/http"
-	"os"
-	"path/filepath"
 	"strconv"
-	"time"
 
 	"github.com/xiam/to"
 
@@ -18,6 +15,7 @@ type Image struct {
 	Path            string
 	FileName        string
 	Bucket          string
+	TimewebToken    string
 	Crop            bool
 	Debug           bool
 	Height          int
@@ -32,7 +30,6 @@ type Image struct {
 var allowedTypes = []string{".png", ".jpg", ".jpeg", ".gif", ".webp"}
 
 func NewImage(r *http.Request, config HandlerConfig, fileName string) (image *Image, err error) {
-	maxDimension := 3064
 
 	crop := false
 	if r.URL.Query().Get("c") != "" {

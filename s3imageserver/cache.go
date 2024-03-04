@@ -63,7 +63,6 @@ func (i *Image) getCachedFileName(r *http.Request) (fileName string) {
 		pathPrefix = h[1]
 	}
 	fileNameOnly := i.FileName[0 : len(i.FileName)-len(filepath.Ext(i.FileName))]
-	return fmt.Sprintf("%v/%v_w%v_h%v_c%v_%v%v", i.CachePath, pathPrefix, i.Width, i.Height, i.Crop, fileNameOnly, allowedMap[i.OutputFormat])
 }
 
 // TODO: add garbage colection
