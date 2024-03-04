@@ -10,7 +10,6 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/coccodrillo/vips"
 	"github.com/xiam/to"
 	"github.com/kr/s3"
 )
@@ -27,24 +26,15 @@ type Image struct {
 	CacheTime       int
 	CachePath       string
 	ErrorImage      string
-	ErrorResizeCrop bool
-	OutputFormat    vips.ImageType
+	OutputFormat    string
 }
 
 var allowedTypes = []string{".png", ".jpg", ".jpeg", ".gif", ".webp"}
-var allowedMap = map[vips.ImageType]string{vips.WEBP: ".webp", vips.JPEG: ".jpg", vips.PNG: ".png"}
 
 func NewImage(r *http.Request, config HandlerConfig, fileName string) (image *Image, err error) {
 	maxDimension := 3064
-	height := int(to.Float64(r.URL.Query().Get("h")))
-	width := int(to.Float64(r.URL.Query().Get("w")))
-	if height > maxDimension {
-		height = maxDimension
-	}
-	if width > maxDimension {
-		width = maxDimension
-	}
-	crop := true
+
+	crop := false
 	if r.URL.Query().Get("c") != "" {
 		crop = to.Bool(r.URL.Query().Get("c"))
 	}
@@ -52,28 +42,18 @@ func NewImage(r *http.Request, config HandlerConfig, fileName string) (image *Im
 		Path:            config.Timeweb.FilePath,
 		Bucket:          config.Timeweb.BucketName,
 		TimewebToken	 config.Timeweb.TimewebToken
-		Height:          height,
+		Height:          100,
 		Crop:            crop,
-		Width:           width,
+		Width:           100,
 		CacheTime:       604800, // cache time in seconds, set 0 to infinite and -1 for disabled
 		CachePath:       config.CachePath,
 		ErrorImage:      "",
-		ErrorResizeCrop: false,
-		OutputFormat:    vips.PNG,
+		OutputFormat:    ".png",
 	}
 	if config.CacheTime != nil {
 		image.CacheTime = *config.CacheTime
 	}
-	image.isFormatSupported(r.URL.Query().Get("f"))
-	acceptedTypes := allowedTypes
-	if config.Allowed != nil && len(config.Allowed) > 0 {
-		acceptedTypes = config.Allowed
-	}
-	for _, allowed := range acceptedTypes {
-		if allowed == filepath.Ext(fileName) {
-			image.FileName = filepath.FromSlash(fileName)
-		}
-	}
+	
 	if image.FileName == "" {
 		err = errors.New("File name cannot be an empty string")
 	}
@@ -98,23 +78,12 @@ func (i *Image) getImage(w http.ResponseWriter, r *http.Request) {
 			err = i.getErrorImage()
 			w.WriteHeader(404)
 		} else {
-			i.resizeCrop()
 			go i.writeCache(r)
 		}
 	}
 	i.write(w)
 }
 
-func (i *Image) isFormatSupported(format string) {
-	if format != "" {
-		format = "." + format
-		for v, k := range allowedMap {
-			if k == format {
-				i.OutputFormat = v
-			}
-		}
-	}
-}
 
 func (i *Image) write(w http.ResponseWriter) {
 	w.Header().Set("Content-Length", strconv.Itoa(len(i.Image)))
@@ -126,9 +95,6 @@ func (i *Image) getErrorImage() (err error) {
 		i.Image, err = ioutil.ReadFile(i.ErrorImage)
 		if err != nil {
 			return err
-		}
-		if i.ErrorResizeCrop {
-			i.resizeCrop()
 		}
 		return nil
 	}
@@ -155,21 +121,3 @@ func (i *Image) getImageFromS3() (err error) {
 	return err
 }
 
-func (i *Image) resizeCrop() {
-	options := vips.Options{
-		Width:        i.Width,
-		Height:       i.Height,
-		Crop:         i.Crop,
-		Extend:       vips.EXTEND_WHITE,
-		Interpolator: vips.BICUBIC,
-		Gravity:      vips.CENTRE,
-		Quality:      75,
-		Format:       i.OutputFormat,
-	}
-	buf, err := vips.Resize(i.Image, options)
-	if err != nil {
-		fmt.Fprintln(os.Stderr, err)
-		return
-	}
-	i.Image = buf
-}
