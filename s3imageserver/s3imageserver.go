@@ -29,11 +29,10 @@ type Config struct {
 type HandlerConfig struct {
 	Name   string `json:"name"`
 	Prefix string `json:"prefix"`
-	AWS    struct {
-		AWSAccess  string `json:"aws_access"`
-		AWSSecret  string `json:"aws_secret"`
+	Timeweb    struct {
 		BucketName string `json:"bucket_name"`
 		FilePath   string `json:"file_path"`
+		TimewebToken   string `json:"timeweb_token"`
 	} `json:"aws"`
 	ErrorImage   string   `json:"error_image"`
 	Allowed      []string `json:"allowed_formats"`
@@ -69,7 +68,7 @@ func Run(verify HandleVerification) {
 			i, err := NewImage(r, handler, ps.ByName("param"))
 			i.ErrorImage = handler.ErrorImage
 			if err == nil && (verify == nil || verify(r.URL.Query().Get("t"))) {
-				i.getImage(w, r, handler.AWS.AWSAccess, handler.AWS.AWSSecret)
+				i.getImage(w, r)
 			} else {
 				if err != nil {
 					fmt.Println(err.Error())

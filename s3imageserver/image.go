@@ -11,7 +11,7 @@ import (
 	"time"
 
 	"github.com/coccodrillo/vips"
-	"github.com/gosexy/to"
+	"github.com/xiam/to"
 	"github.com/kr/s3"
 )
 
@@ -49,16 +49,17 @@ func NewImage(r *http.Request, config HandlerConfig, fileName string) (image *Im
 		crop = to.Bool(r.URL.Query().Get("c"))
 	}
 	image = &Image{
-		Path:            config.AWS.FilePath,
-		Bucket:          config.AWS.BucketName,
+		Path:            config.Timeweb.FilePath,
+		Bucket:          config.Timeweb.BucketName,
+		TimewebToken	 config.Timeweb.TimewebToken
 		Height:          height,
 		Crop:            crop,
 		Width:           width,
 		CacheTime:       604800, // cache time in seconds, set 0 to infinite and -1 for disabled
 		CachePath:       config.CachePath,
 		ErrorImage:      "",
-		ErrorResizeCrop: true,
-		OutputFormat:    vips.WEBP,
+		ErrorResizeCrop: false,
+		OutputFormat:    vips.PNG,
 	}
 	if config.CacheTime != nil {
 		image.CacheTime = *config.CacheTime
@@ -82,7 +83,7 @@ func NewImage(r *http.Request, config HandlerConfig, fileName string) (image *Im
 	return image, err
 }
 
-func (i *Image) getImage(w http.ResponseWriter, r *http.Request, AWSAccess string, AWSSecret string) {
+func (i *Image) getImage(w http.ResponseWriter, r *http.Request) {
 	var err error
 	if i.CacheTime > -1 {
 		err = i.getFromCache(r)
@@ -91,7 +92,7 @@ func (i *Image) getImage(w http.ResponseWriter, r *http.Request, AWSAccess strin
 	}
 	if err != nil {
 		fmt.Println(err)
-		err := i.getImageFromS3(AWSAccess, AWSSecret)
+		err := i.getImageFromS3()
 		if err != nil {
 			fmt.Println(err)
 			err = i.getErrorImage()
@@ -134,14 +135,10 @@ func (i *Image) getErrorImage() (err error) {
 	return errors.New("Error image not specified")
 }
 
-func (i *Image) getImageFromS3(AWSAccess string, AWSSecret string) (err error) {
-	req, _ := http.NewRequest("GET", fmt.Sprintf("https://%v.s3.amazonaws.com/%v%v", i.Bucket, i.Path, i.FileName), nil)
-	req.Header.Set("Date", time.Now().UTC().Format(http.TimeFormat))
-	req.Header.Set("X-Amz-Acl", "public-read")
-	s3.Sign(req, s3.Keys{
-		AccessKey: AWSAccess,
-		SecretKey: AWSSecret,
-	})
+func (i *Image) getImageFromS3() (err error) {
+	req, _ := http.NewRequest("GET", fmt.Sprintf("https://s3.timeweb.com/%v%v%v", i.Bucket, i.Path, i.FileName), nil)
+	req.Header.Set("Authorization", "Bearer " + i.TimewebToken)
+
 	resp, err := http.DefaultClient.Do(req)
 	if err == nil && resp.StatusCode == http.StatusOK {
 		defer resp.Body.Close()
