@@ -51,7 +51,7 @@ func removeExpiredImage(fileName string) {
 
 func (i *Image) getCachedFileName(r *http.Request) (fileName string) {
 
-	return fmt.Sprintf("%v/%v.png", i.CachePath, i.FileName)
+	return fmt.Sprintf("%v/%v", i.CachePath, i.FileName)
 }
 
 // TODO: add garbage colection
