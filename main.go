@@ -3,12 +3,14 @@ package main
 import (
 	"fmt"
 	"io/ioutil"
+	"os"
 
 	"github.com/SiberianMonster/s3imageserver/s3imageserver"
 	"github.com/dgrijalva/jwt-go"
 )
 
 func main() {
+	_ = os.Mkdir("cache", os.ModePerm)
 	s3imageserver.Run(nil)
 }
 
