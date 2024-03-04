@@ -65,7 +65,9 @@ func Run(verify HandleVerification) {
 			prefix = handler.Prefix
 		}
 		r.GET("/"+prefix+"/:param", func(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
+			log.Println(ps.ByName("param"))
 			i, err := NewImage(r, handler, ps.ByName("param"))
+			
 			i.ErrorImage = handler.ErrorImage
 			if err == nil && (verify == nil || verify(r.URL.Query().Get("t"))) {
 				i.getImage(w, r)
