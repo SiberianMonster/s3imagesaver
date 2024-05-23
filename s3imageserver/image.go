@@ -102,8 +102,8 @@ func (i *Image) getErrorImage() (err error) {
 }
 
 func (i *Image) getImageFromS3() (err error) {
-	req, _ := http.NewRequest("GET", fmt.Sprintf("https://s3.timeweb.com/%v%v%v", i.Bucket, i.Path, i.FileName), nil)
-	log.Println(fmt.Sprintf("https://s3.timeweb.com/%v%v%v", i.Bucket, i.Path, i.FileName))
+	req, _ := http.NewRequest("GET", fmt.Sprintf("https://s3.timeweb.com/%v/%v/%v", i.Bucket, i.Path, i.FileName), nil)
+	log.Println(fmt.Sprintf("https://s3.timeweb.com/%v/%v/%v", i.Bucket, i.Path, i.FileName))
 	//req.Header.Set("Authorization", "Bearer " + i.TimewebToken)
 
 	resp, err := http.DefaultClient.Do(req)
@@ -117,6 +117,7 @@ func (i *Image) getImageFromS3() (err error) {
 		}
 		return nil
 	} else if resp.StatusCode != http.StatusOK {
+		log.Println(resp.StatusCode)
 		err = errors.New("Error while making request")
 	}
 	return err
