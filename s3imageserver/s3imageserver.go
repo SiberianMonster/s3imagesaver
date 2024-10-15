@@ -9,6 +9,7 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"log"
 
 	"strconv"
 	"sync"
@@ -44,14 +45,27 @@ type HandlerConfig struct {
 type HandleVerification func(string) bool
 
 func Run(verify HandleVerification) {
+	// log to custom file
+    LOG_FILE := "s3imageserver_log.log"
+	logFile, err := os.OpenFile(LOG_FILE, os.O_APPEND|os.O_RDWR|os.O_CREATE, 0644)
+    if err != nil {
+		log.Println("log panic")
+        log.Panic(err)
+    }
+    defer logFile.Close()
+	// Set log out put and enjoy :)
+    log.SetOutput(logFile)
+
 	envArg := flag.String("c", "config.json", "Configuration")
 	flag.Parse()
 	content, err := ioutil.ReadFile(*envArg)
 	if err != nil {
-		fmt.Print("Error:", err)
+		log.Println("Error:", err)
 		os.Exit(1)
 	}
 	var conf Config
+	
+    
 	err = json.Unmarshal(content, &conf)
 	if err != nil {
 		fmt.Print("Error:", err)
@@ -85,6 +99,7 @@ func Run(verify HandleVerification) {
 
 	wg := &sync.WaitGroup{}
 	if conf.validateHTTPS() {
+		log.Println("Setting up https")
 		config := tls.Config{
 			MinVersion:               tls.VersionTLS10,
 			PreferServerCipherSuites: true,
@@ -117,6 +132,7 @@ func Run(verify HandleVerification) {
 		if conf.HTTPPort != 0 {
 			HTTPPort = ":" + strconv.Itoa(conf.HTTPPort)
 		}
+		
 		if conf.HTTPSStrict && conf.HTTPSEnabled {
 			http.ListenAndServe(HTTPPort, http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
 				http.Redirect(w, req, "https://"+req.Host+req.RequestURI, http.StatusMovedPermanently)
